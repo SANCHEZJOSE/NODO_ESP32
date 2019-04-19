@@ -82,22 +82,17 @@ class SCD30:
         readBuffer(buf, 2)
         return ((((uint16_t)buf[0]) << 8) | buf[1])  #<-- ??????????
     
-    uint8_t SCD30::calculateCrc(uint8_t data[], uint8_t len)
-
-    """
-    uint8_t bit, byteCtr, crc = 0xff;
-      
-    // calculates 8-Bit checksum with given polynomial
-    for(byteCtr = 0; byteCtr < len; byteCtr ++)
-    {
-      crc ^= (data[byteCtr]);
-          
-      for(bit = 8; bit > 0; -- bit)
-      {
-        if(crc & 0x80) crc = (crc << 1) ^ SCD30_POLYNOMIAL;
-        else crc = (crc << 1);
-      }
-    }
-      
-    return crc;
-    """
+    def calculateCrc(self,data,len)
+        self.bit=0, self.crc = 0xff
+        # calculates 8-Bit checksum with given polynomial
+        for i in range (0,len):
+            crc ^= (data[i])
+            
+        for(bit = 8; bit > 0; -- bit)
+        
+            if(crc & 0x80) crc = (crc << 1) ^ SCD30_POLYNOMIAL;
+            else crc = (crc << 1)
+        
+        
+        
+        return crc;
