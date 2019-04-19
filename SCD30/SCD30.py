@@ -1,12 +1,13 @@
 # from micropython import constans
-from machine import I2C
+from machine import self.i2c
 from constans import *
 from numpy import * 
 
 class SCD30:
     def __init__(self):
-        devAddr = SCD30_I2C_ADDRESS
+        self.devAddr = SCD30_self.i2c_ADDRESS
     def initialize(self):
+        self.self.i2c = I2C(freq=80000)
         #Set temperature offset
         #setTemperatureOffset(0);  
         self.setMeasurementInterval(2) # 2 seconds between measurements
@@ -34,65 +35,56 @@ class SCD30:
         self.writeCommand(SCD30_STOP_MEASUREMENT)
     
     
-    """
-    def getCarbonDioxideConcentration(*result)  #<----- PUNTEROOO (?)
-      buf = zeros(18);  #Un arreglo de 18 elementos de valor 0
-      co2U32 = 0
-      tempU32 = 0
-      humU32 = 0
-      co2Concentration = 0
-      temperature = 0
-      humidity = 0
-      
-      writeCommand(SCD30_READ_MEASUREMENT)
-      readBuffer(buf, 18)
-      
-      co2U32 = (uint32_t)((((uint32_t)buf[0]) << 24) | (((uint32_t)buf[1]) << 16) | (((uint32_t)buf[3]) << 8) | ((uint32_t)buf[4]))
-
-      tempU32 = (uint32_t)((((uint32_t)buf[6]) << 24) | (((uint32_t)buf[7]) << 16) | (((uint32_t)buf[9]) << 8) | ((uint32_t)buf[10]))
-
-      humU32 = (uint32_t)((((uint32_t)buf[12]) << 24) | (((uint32_t)buf[13]) << 16) | (((uint32_t)buf[15]) << 8) | ((uint32_t)buf[16]))
-
-      memcpy(&result[0], &co2U32, sizeof(co2Concentration))  
-      memcpy(&result[1], &tempU32, sizeof(temperature))    
-      memcpy(&result[2], &humU32, sizeof(humidity))    
-    """
-    def writeCommand(command):
-        I2C.start(devAddr)
-        I2C.write(command >> 8); # MSB ##????????????????????????
-        I2C.write(command & 0xff) # LSB
-        I2C.stop()
     
-    """
-    def writeCommandWithArguments(command,arguments):
-      checkSum, buf[5] = { 0 }
-      
-      buf[0] = command >> 8;
-      buf[1] = command & 0xff;
-      buf[2] = arguments >> 8;
-      buf[3] = arguments & 0xff;
-      checkSum = calculateCrc(&buf[2], 2);
-      buf[4] = checkSum;
-      
-      writeBuffer(buf, 5);
-      """
-    def readRegister(address)
-        buf= zeros(2)
-        writeCommand(address)
-        readBuffer(buf, 2)
-        return ((((uint16_t)buf[0]) << 8) | buf[1])  #<-- ??????????
+    def getCarbonDioxideConcentration(self,result):
+        buf = bytearray(18) #Un arreglo de 18 elementos de valor 0        
+        self.writeCommand(SCD30_READ_MEASUREMENT)
+        self.readBuffer(buf)
+        co2 = ((buf[0] << 24) | (buf[1] << 16) | (buf[3] << 8) | buf[4])
+
+        temp = ((buf[6] << 24) | (buf[7] << 16) | (buf[9] << 8) | buf[10])
+
+        hum = ((buf[12] << 24) | (buf[13] << 16) | (buf[15] << 8) | buf[16])
+        return {"CO_2":co2,"Temperatura":temp,"humedad":hum}   
     
-    def calculateCrc(self,data,len)
-        self.bit=0, self.crc = 0xff
+    def writeCommand(self,command):
+        self.i2c.start(self.devAddr)
+        self.i2c.write(command >> 8) # MSB
+        self.i2c.write(command & 0xff) # LSB
+        self.i2c.stop()
+    
+    
+    def writeCommandWithArguments(self,command,arguments):
+        buf= bytearray(5)
+        buf[0] = command >> 8
+        buf[1] = command & 0xff
+        buf[2] = arguments >> 8
+        buf[3] = arguments & 0xff
+        checkSum = self.calculateCrc(buf[2:3], 2)
+        buf[4] = checkSum
+        self.writeBuffer(buf)
+
+    def readRegister(self,address):
+        buf= bytearray(2)
+        self.writeCommand(address)
+        self.readBuffer(buf)
+        return (((buf[0]) << 8) | buf[1])
+    
+    def writeBuffer(self,buf):
+        self.i2c.writeto(self.devAddr,buf)
+    
+    def readBuffer(self,buf):
+        self.i2c.readfrom_into(self.devAddr,buf,stop=True)
+    
+    def calculateCrc(self,data,len):
+        self.crc = 0xff
         # calculates 8-Bit checksum with given polynomial
-        for i in range (0,len):
+        for i in range(0,len):
             crc ^= (data[i])
-            
-        for(bit = 8; bit > 0; -- bit)
+            for i in range(7,-1,-1):
+                if(crc & 0x80):
+                    crc = (crc << 1) ^ SCD30_POLYNOMIAL
+                else: 
+                    crc = (crc << 1)
         
-            if(crc & 0x80) crc = (crc << 1) ^ SCD30_POLYNOMIAL;
-            else crc = (crc << 1)
-        
-        
-        
-        return crc;
+        return crc
