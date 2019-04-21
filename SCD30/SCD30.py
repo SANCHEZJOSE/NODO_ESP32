@@ -1,13 +1,13 @@
 # from micropython import constans
-from machine import self.i2c
+from machine import I2C
 from constans import *
-from numpy import * 
+
 
 class SCD30:
     def __init__(self):
-        self.devAddr = SCD30_self.i2c_ADDRESS
+        self.devAddr = SCD30_I2C_ADDRESS
     def initialize(self):
-        self.self.i2c = I2C(freq=80000)
+        self.i2c = I2C(freq=80000)
         #Set temperature offset
         #setTemperatureOffset(0);  
         self.setMeasurementInterval(2) # 2 seconds between measurements
@@ -77,7 +77,7 @@ class SCD30:
         self.i2c.readfrom_into(self.devAddr,buf,stop=True)
     
     def calculateCrc(self,data,len):
-        self.crc = 0xff
+        crc = 0xff
         # calculates 8-Bit checksum with given polynomial
         for i in range(0,len):
             crc ^= (data[i])
@@ -88,3 +88,5 @@ class SCD30:
                     crc = (crc << 1)
         
         return crc
+
+
