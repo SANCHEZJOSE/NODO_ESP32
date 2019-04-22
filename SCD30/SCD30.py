@@ -1,13 +1,11 @@
 # from micropython import constans
-from machine import I2C
 from constans import *
 
-
 class SCD30:
-    def __init__(self):
+    def __init__(self,i2c):
         self.devAddr = SCD30_I2C_ADDRESS
+        self.i2c=i2c
     def initialize(self):
-        self.i2c = I2C(freq=80000)
         #Set temperature offset
         #setTemperatureOffset(0);  
         self.setMeasurementInterval(2) # 2 seconds between measurements
